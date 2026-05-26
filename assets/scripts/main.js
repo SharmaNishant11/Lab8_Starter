@@ -54,6 +54,31 @@ function initializeServiceWorker() {
   // B5. TODO - In the event that the service worker registration fails, console
   //            log that it has failed.
   // STEPS B6 ONWARDS WILL BE IN /sw.js
+
+ 
+
+  // B1. Check if service workers are supported
+  if ('serviceWorker' in navigator) {
+
+    // B2. Listen for window load event
+    window.addEventListener('load', async () => {
+
+      try {
+
+        // B3. Register the service worker
+        const registration = await navigator.serviceWorker.register('./sw.js');
+
+        // B4. Successful registration
+        console.log('Service worker registered successfully:', registration);
+
+      } catch (err) {
+
+        // B5. Failed registration
+        console.log('Service worker registration failed:', err);
+
+      }
+    });
+  }
 }
 
 /**
@@ -100,7 +125,54 @@ async function getRecipes() {
   //            resolve() method.
   // A10. TODO - Log any errors from catch using console.error
   // A11. TODO - Pass any errors to the Promise's reject() function
+  
+ 
+  // A1. Check localStorage first
+  const storedRecipes = localStorage.getItem('recipes');
+
+  if (storedRecipes) {
+    return JSON.parse(storedRecipes);
+  }
+
+  // A2. Create empty recipes array
+  let recipes = [];
+
+  // A3. Return a Promise
+  return new Promise(async (resolve, reject) => {
+
+    // A4. Loop through recipe URLs
+    for (let url of RECIPE_URLS) {
+
+      // A5. try/catch block
+      try {
+
+        // A6. Fetch the URL
+        const response = await fetch(url);
+
+        // A7. Convert response to JSON
+        const recipe = await response.json();
+
+        // A8. Add recipe to array
+        recipes.push(recipe);
+
+        // A9. If all recipes fetched, save + resolve
+        if (recipes.length === RECIPE_URLS.length) {
+          saveRecipesToStorage(recipes);
+          resolve(recipes);
+        }
+
+      } catch (err) {
+
+        // A10. Log errors
+        console.error(err);
+
+        // A11. Reject promise
+        reject(err);
+      }
+    }
+  });
 }
+
 
 /**
  * Takes in an array of recipes, converts it to a string, and then
